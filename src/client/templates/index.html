@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Моята Банка</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Добре дошли в системата на банката</h1>
+    <ul>
+        <li><a href="{{ url_for('transactions_page') }}">Преглед на транзакции</a></li>
+        <li><a href="{{ url_for('new_transaction_page') }}">Създай нов превод</a></li>
+    </ul>
+</body>
+</html>

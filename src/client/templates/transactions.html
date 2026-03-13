@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <title>Преглед на транзакции</title>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+<h2>Преглед на транзакции</h2>
+
+IBAN: <input type="text" id="searchIBAN">
+<button onclick="loadTransactions()">Търси</button>
+
+<pre id="transactionsResult"></pre>
+
+<script>
+async function loadTransactions() {
+    const iban = document.getElementById("searchIBAN").value;
+    if(!iban) return alert("Моля въведете IBAN");
+
+    const resp = await fetch(`/KDBbankAPI/transactions/${iban}`);
+    const data = await resp.json();
+
+    document.getElementById("transactionsResult").innerText = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
