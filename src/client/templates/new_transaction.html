@@ -32,13 +32,13 @@ document.getElementById("transactionForm").addEventListener("submit", async (e)=
         reason: document.getElementById("reason").value
     };
 
-    const resp = await fetch("/KDBbankAPI/transactions/", {
+    const response = await fetch("/KDBbankAPI/transactions/", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(data)
     });
 
-    const result = await resp.json();
+    const result = await response.json();
     document.getElementById("result").innerText = JSON.stringify(result, null, 2);
 });
 </script>
