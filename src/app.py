@@ -13,15 +13,15 @@ app = Flask(__name__, template_folder=template_path, static_folder=static_path)
 # ---------------------------
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", BANK_CODE=BANK_CODE)
 
 @app.route("/transactions")
 def transactions_page():
-    return render_template("transactions.html")
+    return render_template("transactions.html", BANK_CODE=BANK_CODE)
 
 @app.route("/new_transaction")
 def new_transaction_page():
-    return render_template("new_transaction.html")
+    return render_template("new_transaction.html", BANK_CODE=BANK_CODE)
 
 # ---------------------------
 # API routes

@@ -1,28 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="bg">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Преглед на транзакции</title>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Търсене на транзакции</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body>
-<h2>Преглед на транзакции</h2>
 
-IBAN: <input type="text" id="searchIBAN">
-<button onclick="loadTransactions()">Търси</button>
+<body data-page="transactions">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">KrademBank</div>
+      <nav class="nav">
+        <a href="/" class="nav-link">Начало</a>
+        <a href="/transactions" class="nav-link active">Транзакции</a>
+        <a href="/new_transaction" class="nav-link">Нова транзакция</a>
+      </nav>
+    </div>
+  </header>
 
-<pre id="transactionsResult"></pre>
+  <main class="container">
+    <section class="card">
+      <h2>Търсене на транзакции по IBAN</h2>
 
-<script>
-async function loadTransactions() {
-    const iban = document.getElementById("searchIBAN").value;
-    if(!iban) return alert("Моля въведете IBAN");
+      <form id="search-form" class="form">
+        <label for="search-iban">IBAN</label>
+        <input id="search-iban" placeholder="Въведи IBAN (само букви и цифри, макс 22 символа)" />
+        <div class="row">
+          <button class="button">Търси</button>
+          <button type="button" id="clear-btn" class="button outline">Изчисти</button>
+        </div>
+      </form>
 
-    const resp = await fetch(`/KDBbankAPI/transactions/${iban}`);
-    const data = await resp.json();
+      <div id="alerts"></div>
 
-    document.getElementById("transactionsResult").innerText = JSON.stringify(data, null, 2);
-}
-</script>
+      <div id="results-wrap" class="card compact hidden">
+        <h3>Резултати</h3>
+        <div id="results"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+  <script type="module" src="{{ url_for('static', filename='js/transactions.js') }}"></script>
 </body>
+
 </html>

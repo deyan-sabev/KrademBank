@@ -1,15 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="bg">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Моята Банка</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Начало</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body>
-    <h1>Добре дошли в системата на банката</h1>
-    <ul>
-        <li><a href="{{ url_for('transactions_page') }}">Преглед на транзакции</a></li>
-        <li><a href="{{ url_for('new_transaction_page') }}">Създай нов превод</a></li>
-    </ul>
+
+<body data-page="index">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">KrademBank</div>
+      <nav class="nav">
+        <a href="/" class="nav-link active">Начало</a>
+        <a href="/transactions" class="nav-link">Транзакции</a>
+        <a href="/new_transaction" class="nav-link">Нова транзакция</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container center">
+    <section class="card hero">
+      <h1>Добре дошли в интерфейса на банката.</h1>
+      <p class="muted">Код на банката: <strong id="bank-code">{{ BANK_CODE }}</strong></p>
+
+      <div class="row">
+        <a class="main-action-btn" href="/transactions">Търсене на транзакции</a>
+        <a class="main-action-btn" href="/new_transaction">Създаване на нова транзакция</a>
+      </div>
+
+      <hr />
+
+      <div class="card compact">
+        <h3>Бързо търсене по IBAN</h3>
+        <form id="quick-search-form" class="form-inline">
+          <input id="quick-iban" placeholder="Въведи IBAN (напр. {{ BANK_CODE }}001...)" />
+          <button class="button small">Търси</button>
+        </form>
+        <div id="quick-search-result" class="result-area"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+  <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
+
 </html>
