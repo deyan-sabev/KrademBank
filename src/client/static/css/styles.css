@@ -14,7 +14,7 @@
 }
 
 * {
-  box-sizing: border-box
+  box-sizing: border-box;
 }
 
 html, body {
@@ -303,19 +303,19 @@ body {
 
 .small {
   font-size: 0.9rem;
-  color: var(--muted)
+  color: var(--muted);
 }
 
 footer {
   margin: 24px 0;
   text-align: center;
   color: var(--muted);
-  font-size: 0.9rem
+  font-size: 0.9rem;
 }
 
 @media (max-width:640px) {
   .nav {
-    display: none
+    display: none;
   }
 
   .row {
@@ -323,6 +323,6 @@ footer {
   }
 
   .container {
-    width: calc(100% - 28px)
+    width: calc(100% - 28px);
   }
 }
