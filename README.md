@@ -29,7 +29,7 @@ set ENV_FILE=.env.bankAAA
 
 преди да се пусне програмата.
 
-Пример (`.env.bankKDB`):
+Примерен `.env` файл (`.env.bankKDB`):
 
 ```
 PORT=5000
