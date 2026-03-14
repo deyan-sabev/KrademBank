@@ -51,7 +51,7 @@ BANK_REGISTER_API=http://localhost:8000/bankRegister/bank/
 python src/app.py
 ```
 
-Сървърът може бъде достъпен на:
+След това сървърът ще може да се достъпи на:
 
 ```
 http://localhost:5000
