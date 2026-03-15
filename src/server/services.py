@@ -1,7 +1,7 @@
 import requests
-from .db import get_connection
-from server.errors import is_valid_iban, error_response
-from .config import BANK_CODE, BANK_REGISTER_API
+from server.db import get_connection
+from server.errors import APIError, is_valid_iban
+from server.config import BANK_CODE, BANK_REGISTER_API
 
 def is_my_bank(iban: str):
     return iban[:3] == BANK_CODE
@@ -20,7 +20,7 @@ def _call_bank_register_for_bank(iban: str):
         r.raise_for_status()
         return r.json()
     except requests.RequestException:
-        return error_response(602)
+        raise APIError(602)
 
 def _call_remote_bank_transactions(bank_api: str, iban: str):
     try:
@@ -28,22 +28,26 @@ def _call_remote_bank_transactions(bank_api: str, iban: str):
         r = requests.get(url, timeout=10)
         if r.status_code != 200:
             try:
-                return r.json()
+                data = r.json()
+                if isinstance(data, dict) and data.get("status_code") not in (None, 200): # If the bank returned an error in JSON format
+                    raise APIError(data["status_code"], data.get("status_msg"))
+                else:
+                    raise APIError(651)
             except ValueError:
-                return error_response(651)
+                raise APIError(651)
         return r.json()
     except requests.RequestException:
-        return error_response(651)
+        raise APIError(651)
 
 def search_transaction(search, cursor):
     if not is_valid_iban(search):
-        return error_response(608)
-    
+        raise APIError(608)
+
     if is_my_bank(search):
         account = get_account(cursor, search)
         if not account:
-            return error_response(609)
-        
+            raise APIError(609)
+
         sql = """
         SELECT
             iban_sender AS IBAN_sender,
@@ -57,15 +61,12 @@ def search_transaction(search, cursor):
         """
         cursor.execute(sql, (search, search))
         return cursor.fetchall()
-    
+
     bank_data = _call_bank_register_for_bank(search)
-    if isinstance(bank_data, dict) and bank_data.get("status_code") not in (None, 200): # if bank register returned an error_response, forward it
-        return bank_data
-    
     bank_api = bank_data.get("bank_api")
     if not bank_api:
-        return error_response(701)
-    
+        raise APIError(701)
+
     return _call_remote_bank_transactions(bank_api, search)
 
 def process_transaction(data):
@@ -75,24 +76,23 @@ def process_transaction(data):
     currency = data.get("currency")
     reason = data.get("reason", "")
 
-    # Basic validations
     if not sender or not receiver or not amount or not currency:
-        return error_response(606)
+        raise APIError(606)
 
     if sender == receiver:
-        return error_response(607)
+        raise APIError(607)
 
     if not is_valid_iban(sender) or not is_valid_iban(receiver):
-        return error_response(608)
+        raise APIError(608)
 
     if currency not in ["EUR", "USD"]:
-        return error_response(605)
+        raise APIError(605)
 
     sender_is_mine = is_my_bank(sender)
     receiver_is_mine = is_my_bank(receiver)
 
     if not sender_is_mine and not receiver_is_mine:
-        return error_response(603)
+        raise APIError(603)
 
     db = get_connection()
     cursor = db.cursor(dictionary=True)
@@ -105,19 +105,19 @@ def process_transaction(data):
 
         if sender_is_mine and not sender_account:
             db.rollback()
-            return error_response(609)
+            raise APIError(609)
 
         if receiver_is_mine and not receiver_account:
             db.rollback()
-            return error_response(652)
+            raise APIError(652)
 
         if sender_is_mine and sender_account["balance"] < amount:
             db.rollback()
-            return error_response(601)
+            raise APIError(601)
 
         if sender_is_mine and sender_account.get("single_payment_limit") and amount > sender_account["single_payment_limit"]:
             db.rollback()
-            return error_response(604)
+            raise APIError(604)
 
         if sender_is_mine and receiver_is_mine:
             cursor.execute("UPDATE Accounts SET balance = balance - %s WHERE iban=%s", (amount, sender))
@@ -125,40 +125,40 @@ def process_transaction(data):
 
         elif sender_is_mine and not receiver_is_mine:
             bank_data = _call_bank_register_for_bank(receiver)
-            if "bank_api" not in bank_data:
+            bank_api = bank_data.get("bank_api")
+            if not bank_api:
                 db.rollback()
-                return bank_data
+                raise APIError(701)
 
-            bank_api = bank_data["bank_api"]
             try:
                 response = requests.post(bank_api, json=data, timeout=10).json()
             except Exception:
                 db.rollback()
-                return error_response(651)
+                raise APIError(651)
 
             if response.get("status_code") != 200:
                 db.rollback()
-                return response
+                raise APIError(response.get("status_code"), response.get("status_msg"))
 
             cursor.execute("UPDATE Accounts SET balance = balance - %s WHERE iban=%s", (amount, sender))
 
         elif not sender_is_mine and receiver_is_mine:
             bank_data = _call_bank_register_for_bank(sender)
-            if "bank_api" not in bank_data:
+            sender_bank_api = bank_data.get("bank_api")
+            if not sender_bank_api:
                 db.rollback()
-                return bank_data
+                raise APIError(701)
 
-            sender_bank_api = bank_data["bank_api"]
             try:
                 verify = requests.get(sender_bank_api + sender, timeout=10)
                 verify_data = verify.json()
             except Exception:
                 db.rollback()
-                return error_response(651)
+                raise APIError(651)
 
             if isinstance(verify_data, dict) and verify_data.get("status_code") not in (None, 200):
                 db.rollback()
-                return verify_data
+                raise APIError(verify_data.get("status_code"), verify_data.get("status_msg"))
 
             cursor.execute("UPDATE Accounts SET balance = balance + %s WHERE iban=%s", (amount, receiver))
 
@@ -173,9 +173,13 @@ def process_transaction(data):
         db.commit()
         return {"status_code": 200, "status_msg": "Успешна транзакция."}
 
+    except APIError:
+        db.rollback()
+        raise
+
     except Exception:
         db.rollback()
-        return error_response(651)
+        raise APIError(651)
 
     finally:
         cursor.close()

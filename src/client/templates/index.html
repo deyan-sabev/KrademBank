@@ -6,7 +6,7 @@
 
 <section class="card center">
 
-  <h1>Добре дошли в <span class="brand" style="font-size: 1em;">KrademBank</span>!</h1>
+  <h1>Добре дошли в <span class="brand" style="font-size: 1em;">{{ BANK_NAME }}</span>!</h1>
   <p class="muted">Код на банката: <strong>{{ BANK_CODE }}</strong></p>
 
   <div class="row">
@@ -22,7 +22,7 @@
     </p>
 
     <form id="quick-search-form" class="quick-form">
-      <input id="quick-iban" placeholder="напр. {{ BANK_CODE }}001" maxlength="22" />
+      <input id="quick-iban" maxlength="22" placeholder="напр. {{ BANK_CODE }}001" />
       <button class="button">Търси</button>
     </form>
 
@@ -35,5 +35,6 @@
 
 {% block scripts %}
 <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+<script>window.BANK_NAME = "{{ BANK_NAME }}";</script>
 <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

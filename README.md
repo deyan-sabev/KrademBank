@@ -17,22 +17,25 @@
 pip install flask requests mysql-connector-python python-dotenv
 ```
 
+допълнителни:
+
+```bash
+pip install mod_wsgi
+```
+
 ## 2. Конфигурация
 
-Конфигурацията се зарежда от `.env` файл.
+Конфигурацията се зарежда от `.env` файл, който трябва да се намира в `src/server/env` директорията.
 
-Задаване на друг `.env` файл по ваш избор става с:
+Преди да се пусне програмата може да се зададе друг `.env` файл по ваш избор. Това става с:
 
 ```
 set ENV_FILE=.env.bankAAA
 ```
 
-преди да се пусне програмата.
-
 Примерен `.env` файл (`.env.bankKDB`):
 
 ```
-PORT=5000
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=password
@@ -47,14 +50,24 @@ BANK_REGISTER_API=http://localhost:8000/bankRegister/bank/
 
 ## 4. Стартиране
 
+Програмата се пуска с командата:
+
 ```bash
 python src/app.py
 ```
 
-След това сървърът ще може да се достъпи на:
+Сървърът ще може да се достъпи на:
 
 ```
 http://localhost:5000
+```
+
+### Допълнително
+
+Mоже да се пусне сървъра с помощта на mod_wsgi-express:
+
+```
+mod_wsgi-express start-server src/app.py --callable-object app --port 8000
 ```
 
 ---
@@ -65,6 +78,9 @@ Backend частта е разделена на няколко модула.
 
 ```
 server/
+│
+├── env/
+│   └── .env.bankKDB
 │
 ├── config.py
 ├── db.py
@@ -111,7 +127,6 @@ POST /<BANK_CODE>bankAPI/transactions/
 ### Валидиране
 
 ```
-is_valid_iban()
 is_my_bank()
 ```
 
@@ -175,7 +190,7 @@ process_transaction()
 
 ## errors.py
 
-Съдържа описани грешките, които могат да възникнат, с техните кодове.
+Съдържа описани грешките, които могат да възникнат, с техните кодове, функция за проверка на IBAN и клас за възникналите грешки.
 
 Пример:
 
@@ -186,19 +201,18 @@ process_transaction()
 652 – невалидна сметка на бенефициента
 ```
 
-Връщането на грешка става чрез:
+Проверка на IBAN става чрез:
 
 ```
-error_response(code)
+is_valid_iban(iban)
 ```
 
-което връща JSON:
+което връща `True` или `False`.
 
-```json
-{
-  "status_code": 601,
-  "status_msg": "Недостатъчна наличност в сметката на наредителя."
-}
+Пример за използването на класа:
+
+```
+raise APIError(601)
 ```
 
 ---
@@ -217,7 +231,6 @@ get_connection()
 
 Зарежда конфигурацията от `.env` файл:
 
-* порт
 * код на банката
 * идентификационни данни за БД
 * адрес на банковия регистър
@@ -294,6 +307,7 @@ client/
 client/
 │
 ├── templates/
+│   ├── base.html
 │   ├── index.html
 │   ├── transactions.html
 │   └── new_transaction.html
@@ -317,11 +331,19 @@ HTML страниците се изобразяват с Flask.
 
 ### index.html
 
+Template страница.
+
+Съдържа:
+
+* навигационно меню
+* header, footer
+
+### index.html
+
 Начална страница.
 
 Съдържа:
 
-* меню
 * бързо търсене на транзакции по IBAN
 
 ### transactions.html

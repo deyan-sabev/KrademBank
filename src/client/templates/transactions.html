@@ -11,7 +11,7 @@
   <form id="search-form" class="form">
     <label for="search-iban">Въведете IBAN, за да видите всички транзакции на сметката.</label>
 
-    <input id="search-iban" placeholder="напр. KDB001" />
+    <input id="search-iban" maxlength="22" placeholder="напр. {{ BANK_CODE }}001" />
 
     <div class="row">
       <button class="button">Търси</button>
@@ -33,5 +33,6 @@
 
 {% block scripts %}
 <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+<script>window.BANK_NAME = "{{ BANK_NAME }}";</script>
 <script type="module" src="{{ url_for('static', filename='js/transactions.js') }}"></script>
 {% endblock %}

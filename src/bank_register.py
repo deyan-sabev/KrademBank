@@ -1,5 +1,6 @@
+import sys
 from flask import Flask, jsonify
-from server.errors import is_valid_iban, error_response
+from server.errors import APIError, is_valid_iban
 
 app = Flask(__name__)
 
@@ -18,32 +19,40 @@ banks = {
     }
 }
 
-# =========================
-# GET all banks
-# =========================
+@app.errorhandler(APIError)
+def handle_api_error(error: APIError):
+    return jsonify({
+        "status_code": error.code,
+        "status_msg": error.message
+    }), error.http_status
+
 @app.route("/bankRegister/bank")
 def get_all_banks():
-    return jsonify(banks)
+    return jsonify(banks), 200
 
-# =========================
-# GET bank by IBAN
-# =========================
 @app.route("/bankRegister/bank/<iban>")
 def get_bank(iban):
     if not is_valid_iban(iban):
-        return error_response(608)
-    
+        raise APIError(608)
+
     bank_code = iban[:3]
-
     if bank_code not in banks:
-        return error_response(701)
-    bank = banks[bank_code]
+        raise APIError(701)
 
+    bank = banks[bank_code]
     return jsonify({
         "bank_code": bank_code,
         "bank_name": bank["bank_name"],
         "bank_api": bank["bank_api"]
-    })
+    }), 200
 
 if __name__ == "__main__":
-    app.run(port=8000)
+    port = 5050
+
+    if len(sys.argv) > 1:
+        try:
+            port = int(sys.argv[1])
+        except ValueError:
+            print(f"Invalid port number '{sys.argv[1]}', using default {port}")
+
+    app.run(port=port)

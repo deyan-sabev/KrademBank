@@ -24,11 +24,17 @@ ERRORS = {
     701: "Неразпозната банка на бенефициента."
 }
 
+HTTP_STATUS = {
+    601: 400, 602: 502, 603: 403, 604: 400, 605: 400, 606: 400,
+    607: 400, 608: 400, 609: 404, 651: 502, 652: 404, 701: 404
+}
+
 def is_valid_iban(iban: str) -> bool:
     return bool(iban) and len(iban.strip()) <= 22 and iban.isalnum() and iban[:3].isalpha()
 
-def error_response(code):
-    return {
-        "status_code": code,
-        "status_msg": ERRORS.get(code, "Неразпознат код за грешка.")
-    }
+class APIError(Exception):
+    def __init__(self, code, message=None):
+        self.code = code
+        self.message = message or ERRORS.get(code, "Неразпознат код за грешка.")
+        self.http_status = HTTP_STATUS.get(code, 400)
+        super().__init__(self.message)

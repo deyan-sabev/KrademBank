@@ -62,5 +62,6 @@
 
 {% block scripts %}
 <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+<script>window.BANK_NAME = "{{ BANK_NAME }}";</script>
 <script type="module" src="{{ url_for('static', filename='js/new_transaction.js') }}"></script>
 {% endblock %}
