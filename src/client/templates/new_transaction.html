@@ -1,60 +1,66 @@
-<!doctype html>
-<html lang="bg">
+{% extends "base.html" %}
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Нова транзакция</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
+{% block title %}Нова транзакция{% endblock %}
 
-<body data-page="new_transaction">
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">KrademBank</div>
-      <nav class="nav">
-        <a href="/" class="nav-link">Начало</a>
-        <a href="/transactions" class="nav-link">Транзакции</a>
-        <a href="/new_transaction" class="nav-link active">Нова транзакция</a>
-      </nav>
+{% block content %}
+<section class="card">
+  <h2>Създаване на нова транзакция</h2>
+
+  <form id="tx-form" class="form">
+
+    <div class="form-group">
+      <label for="iban-sender">IBAN на наредителя</label>
+      <input id="iban-sender" maxlength="22" placeholder="напр. {{ BANK_CODE }}001..." />
     </div>
-  </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>Създаване на нова транзакция</h2>
+    <div class="form-group">
+      <label for="iban-receiver">IBAN на получателя</label>
+      <input id="iban-receiver" maxlength="22" placeholder="IBAN на получателя" />
+    </div>
 
-      <form id="tx-form" class="form">
-        <label for="iban-sender">IBAN на наредителя</label>
-        <input id="iban-sender" maxlength="22" placeholder="IBAN на наредителя" />
+    <div class="form-row">
 
-        <label for="iban-receiver">IBAN на получателя</label>
-        <input id="iban-receiver" maxlength="22" placeholder="IBAN на получателя" />
-
+      <div class="form-group">
         <label for="amount">Сума</label>
         <input id="amount" type="number" step="0.01" min="0.01" placeholder="0.00" />
+      </div>
 
-        <label for="currency">Валута</label>
-        <select id="currency">
-          <option value="EUR">EUR</option>
-          <option value="USD">USD</option>
-        </select>
-
-        <label for="reason">Основание (по желание)</label>
-        <input id="reason" placeholder="Причина за плащането" />
-
-        <div class="row">
-          <button class="button">Изпрати</button>
-          <button type="button" id="reset-btn" class="button outline">Нулирай</button>
+      <div class="form-group">
+        <div class="custom-select">
+          <label for="currency">Валута</label>
+          <div class="select-box" tabindex="0">
+            <span class="selected">€ Euro (EUR)</span>
+            <svg class="arrow" viewBox="0 0 10 6" width="10" height="6">
+              <polyline points="1,1 5,5 9,1" stroke="var(--muted)" stroke-width="2" fill="none" />
+            </svg>
+          </div>
+          <ul class="options">
+            <li data-value="EUR">€ Euro (EUR)</li>
+            <li data-value="USD">$ US Dollar (USD)</li>
+          </ul>
+          <input type="hidden" id="currency" name="currency" value="EUR">
         </div>
-      </form>
+      </div>
 
-      <div id="tx-alerts"></div>
-    </section>
-  </main>
+    </div>
 
-  <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
-  <script type="module" src="{{ url_for('static', filename='js/new_transaction.js') }}"></script>
-</body>
+    <div class="form-group">
+      <label for="reason">Основание (по желание)</label>
+      <input id="reason" placeholder="Основание за транзакция" />
+    </div>
 
-</html>
+    <div class="row">
+      <button class="button">Изпрати транзакция</button>
+      <button type="button" id="reset-btn" class="button outline">Нулирай</button>
+    </div>
+
+  </form>
+
+  <div id="tx-alerts"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+<script type="module" src="{{ url_for('static', filename='js/new_transaction.js') }}"></script>
+{% endblock %}

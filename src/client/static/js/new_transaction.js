@@ -3,6 +3,7 @@ import { qs, showAlert, clearAlerts, isValidIBAN } from './common.js';
 const form = qs('#tx-form');
 const alerts = qs('#tx-alerts');
 const resetBtn = qs('#reset-btn');
+const selectBoxes = document.querySelectorAll('.custom-select');
 
 if(form) {
   form.addEventListener('submit', async (ev) => {
@@ -16,7 +17,7 @@ if(form) {
     const reason = qs('#reason').value.trim();
 
     if(!isValidIBAN(sender) || !isValidIBAN(receiver)) {
-      showAlert(alerts, 'Невалиден IBAN. Уверете се, че съдържа само букви и цифри и е до 22 символа.', 'error');
+      showAlert(alerts, 'Невалиден IBAN — трябва да съдържа само букви и цифри, максимално 22 символа.', 'error');
       return;
     }
     if(sender === receiver) {
@@ -73,3 +74,90 @@ if(resetBtn) {
     clearAlerts(alerts);
   });
 }
+
+selectBoxes.forEach(custom => {
+  const box = custom.querySelector('.select-box');
+  const options = custom.querySelector('.options');
+  const selected = box.querySelector('.selected');
+  const hiddenInput = custom.querySelector('input[type="hidden"]');
+
+  let currentIndex = -1;
+
+  // Open/close on click
+  box.addEventListener('click', (e) => {
+    e.stopPropagation();
+    box.classList.toggle('active');
+    options.classList.toggle('active');
+  });
+
+  // Option click
+  options.querySelectorAll('li').forEach((opt, index) => {
+    opt.addEventListener('click', () => {
+      selectOption(index);
+    });
+  });
+
+  // Keyboard support
+  box.addEventListener('keydown', (e) => {
+    const opts = options.querySelectorAll('li');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      box.classList.add('active');
+      options.classList.add('active');
+      currentIndex = (currentIndex + 1) % opts.length;
+      highlightOption(opts);
+    }
+    else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      box.classList.add('active');
+      options.classList.add('active');
+      currentIndex = (currentIndex - 1 + opts.length) % opts.length;
+      highlightOption(opts);
+    }
+    else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!options.classList.contains('active')) {
+        // open dropdown
+        box.classList.add('active');
+        options.classList.add('active');
+      } else if (currentIndex >= 0) {
+        selectOption(currentIndex);
+      }
+    }
+    else if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  // Close dropdown if clicking outside
+  document.addEventListener('click', () => {
+    closeDropdown();
+  });
+
+  function selectOption(index) {
+    const opts = options.querySelectorAll('li');
+    selected.textContent = opts[index].textContent;
+    hiddenInput.value = opts[index].dataset.value;
+    closeDropdown();
+  }
+
+  function highlightOption(opts) {
+    opts.forEach((opt, i) => {
+      opt.style.background = i === currentIndex ? 'rgba(59,130,246,0.08)' : '';
+      opt.style.color = i === currentIndex ? 'var(--accent-2)' : '';
+      if (i === currentIndex) {
+        opt.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  function closeDropdown() {
+    box.classList.remove('active');
+    options.classList.remove('active');
+    currentIndex = -1;
+    options.querySelectorAll('li').forEach(opt => {
+      opt.style.background = '';
+      opt.style.color = '';
+    });
+  }
+});

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="bg">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+
+    <!-- Topbar / Navigation -->
+    <header class="topbar">
+        <div class="container topbar-inner">
+
+            <div class="brand-area">
+                <div class="brand">KrademBank</div>
+            </div>
+
+            <nav class="nav">
+                <a href="/" class="nav-link {% if active=='home' %}active{% endif %}">Начало</a>
+                <a href="/transactions" class="nav-link {% if active=='transactions' %}active{% endif %}">Транзакции</a>
+                <a href="/new_transaction" class="nav-link {% if active=='new_transaction' %}active{% endif %}">Нова транзакция</a>
+            </nav>
+
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div class="footer-brand">
+                <strong>KrademBank</strong>
+                <br>
+                <span class="muted">Банката, която взема на присърце вашите <span style="text-decoration: line-through;">пари</span> мечти!</span>
+            </div>
+
+            <div class="footer-info">
+                <span class="muted">© 2026</span>
+                <br>
+                <span class="muted">Код на банката: <strong>{{ BANK_CODE }}</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+
+</body>
+
+</html>

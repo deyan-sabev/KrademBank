@@ -1,50 +1,39 @@
-<!doctype html>
-<html lang="bg">
+{% extends "base.html" %}
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Начало</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
+{% block title %}Начало{% endblock %}
 
-<body data-page="index">
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <div class="brand">KrademBank</div>
-      <nav class="nav">
-        <a href="/" class="nav-link active">Начало</a>
-        <a href="/transactions" class="nav-link">Транзакции</a>
-        <a href="/new_transaction" class="nav-link">Нова транзакция</a>
-      </nav>
-    </div>
-  </header>
+{% block content %}
 
-  <main class="container center">
-    <section class="card hero">
-      <h1>Добре дошли в интерфейса на банката.</h1>
-      <p class="muted">Код на банката: <strong id="bank-code">{{ BANK_CODE }}</strong></p>
+<section class="card center">
 
-      <div class="row">
-        <a class="main-action-btn" href="/transactions">Търсене на транзакции</a>
-        <a class="main-action-btn" href="/new_transaction">Създаване на нова транзакция</a>
-      </div>
+  <h1>Добре дошли в <span class="brand" style="font-size: 1em;">KrademBank</span>!</h1>
+  <p class="muted">Код на банката: <strong>{{ BANK_CODE }}</strong></p>
 
-      <hr />
+  <div class="row">
+    <a class="main-action-btn" href="/transactions">Търсене на транзакции</a>
+    <a class="main-action-btn" href="/new_transaction">Създаване на нова транзакция</a>
+  </div>
 
-      <div class="card compact">
-        <h3>Бързо търсене по IBAN</h3>
-        <form id="quick-search-form" class="form-inline">
-          <input id="quick-iban" placeholder="Въведи IBAN (напр. {{ BANK_CODE }}001...)" />
-          <button class="button small">Търси</button>
-        </form>
-        <div id="quick-search-result" class="result-area"></div>
-      </div>
-    </section>
-  </main>
+  <div class="card compact quick-search">
+    <h3>Бързо търсене по IBAN</h3>
 
-  <script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
-  <script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
-</body>
+    <p class="muted small">
+      Въведете IBAN, за да видите всички транзакции на сметката.
+    </p>
 
-</html>
+    <form id="quick-search-form" class="quick-form">
+      <input id="quick-iban" placeholder="напр. {{ BANK_CODE }}001" maxlength="22" />
+      <button class="button">Търси</button>
+    </form>
+
+    <div id="quick-search-result" class="result-area"></div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>window.BANK_CODE = "{{ BANK_CODE }}";</script>
+<script type="module" src="{{ url_for('static', filename='js/index.js') }}"></script>
+{% endblock %}

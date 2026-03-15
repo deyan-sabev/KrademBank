@@ -1,19 +1,17 @@
 import requests
 from .db import get_connection
-from .errors import error_response
+from server.errors import is_valid_iban, error_response
 from .config import BANK_CODE, BANK_REGISTER_API
-
-def is_valid_iban(iban: str):
-    if not iban:
-        return False
-    if len(iban) > 22:
-        return False
-    if not iban.isalnum():
-        return False
-    return True
 
 def is_my_bank(iban: str):
     return iban[:3] == BANK_CODE
+
+def get_account(cursor, iban: str, for_update=False):
+    sql = "SELECT * FROM Accounts WHERE iban=%s"
+    if for_update:
+        sql += " FOR UPDATE"
+    cursor.execute(sql, (iban,))
+    return cursor.fetchone()
 
 def _call_bank_register_for_bank(iban: str):
     try:
@@ -42,6 +40,10 @@ def search_transaction(search, cursor):
         return error_response(608)
     
     if is_my_bank(search):
+        account = get_account(cursor, search)
+        if not account:
+            return error_response(609)
+        
         sql = """
         SELECT
             iban_sender AS IBAN_sender,
@@ -61,7 +63,6 @@ def search_transaction(search, cursor):
         return bank_data
     
     bank_api = bank_data.get("bank_api")
-    
     if not bank_api:
         return error_response(701)
     
@@ -70,10 +71,11 @@ def search_transaction(search, cursor):
 def process_transaction(data):
     sender = data.get("IBAN_sender")
     receiver = data.get("IBAN_receiver")
-    amount: float = data.get("amount")
+    amount = data.get("amount")
     currency = data.get("currency")
     reason = data.get("reason", "")
 
+    # Basic validations
     if not sender or not receiver or not amount or not currency:
         return error_response(606)
 
@@ -97,69 +99,44 @@ def process_transaction(data):
 
     try:
         db.start_transaction()
+
+        sender_account = get_account(cursor, sender, for_update=sender_is_mine) if sender_is_mine else None
+        receiver_account = get_account(cursor, receiver, for_update=receiver_is_mine) if receiver_is_mine else None
+
+        if sender_is_mine and not sender_account:
+            db.rollback()
+            return error_response(609)
+
+        if receiver_is_mine and not receiver_account:
+            db.rollback()
+            return error_response(652)
+
+        if sender_is_mine and sender_account["balance"] < amount:
+            db.rollback()
+            return error_response(601)
+
+        if sender_is_mine and sender_account.get("single_payment_limit") and amount > sender_account["single_payment_limit"]:
+            db.rollback()
+            return error_response(604)
+
         if sender_is_mine and receiver_is_mine:
-            cursor.execute(
-                """
-                SELECT balance, single_payment_limit, currency
-                FROM Accounts
-                WHERE iban=%s
-                FOR UPDATE
-                """,
-                (sender,)
-            )
-            sender_account = cursor.fetchone()
-            if not sender_account:
-                db.rollback()
-                return error_response(608)
-            if sender_account["balance"] < amount:
-                db.rollback()
-                return error_response(601)
-            limit = sender_account["single_payment_limit"]
-            if limit and amount > limit:
-                db.rollback()
-                return error_response(604)
-
-            cursor.execute("SELECT iban FROM Accounts WHERE iban=%s FOR UPDATE", (receiver,))
-            if not cursor.fetchone():
-                db.rollback()
-                return error_response(652)
-
             cursor.execute("UPDATE Accounts SET balance = balance - %s WHERE iban=%s", (amount, sender))
             cursor.execute("UPDATE Accounts SET balance = balance + %s WHERE iban=%s", (amount, receiver))
 
         elif sender_is_mine and not receiver_is_mine:
-            cursor.execute(
-                """
-                SELECT balance, single_payment_limit
-                FROM Accounts
-                WHERE iban=%s
-                FOR UPDATE
-                """,
-                (sender,)
-            )
-            sender_account = cursor.fetchone()
-            if not sender_account:
-                db.rollback()
-                return error_response(608)
-            if sender_account["balance"] < amount:
-                db.rollback()
-                return error_response(601)
-
             bank_data = _call_bank_register_for_bank(receiver)
             if "bank_api" not in bank_data:
                 db.rollback()
                 return bank_data
-            
-            bank_api = bank_data["bank_api"]
 
+            bank_api = bank_data["bank_api"]
             try:
-                request = requests.post(bank_api, json=data, timeout=10)
-                response = request.json()
-            except:
+                response = requests.post(bank_api, json=data, timeout=10).json()
+            except Exception:
                 db.rollback()
                 return error_response(651)
 
-            if response["status_code"] != 200:
+            if response.get("status_code") != 200:
                 db.rollback()
                 return response
 
@@ -172,11 +149,10 @@ def process_transaction(data):
                 return bank_data
 
             sender_bank_api = bank_data["bank_api"]
-
             try:
-                verify = requests.get(sender_bank_api + sender, timeout=5)
+                verify = requests.get(sender_bank_api + sender, timeout=10)
                 verify_data = verify.json()
-            except:
+            except Exception:
                 db.rollback()
                 return error_response(651)
 
@@ -184,12 +160,6 @@ def process_transaction(data):
                 db.rollback()
                 return verify_data
 
-            cursor.execute("SELECT iban FROM Accounts WHERE iban=%s FOR UPDATE", (receiver,))
-
-            if not cursor.fetchone():
-                db.rollback()
-                return error_response(652)
-            
             cursor.execute("UPDATE Accounts SET balance = balance + %s WHERE iban=%s", (amount, receiver))
 
         cursor.execute(

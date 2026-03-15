@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-from server.errors import error_response
+from server.errors import is_valid_iban, error_response
 
 app = Flask(__name__)
 
@@ -17,15 +17,6 @@ banks = {
         "bank_api": "http://localhost:5002/BBBbankAPI/transactions/"
     }
 }
-
-def is_valid_iban(iban: str):
-    if not iban:
-        return False
-    if len(iban) > 22:
-        return False
-    if not iban.isalnum():
-        return False
-    return True
 
 # =========================
 # GET all banks

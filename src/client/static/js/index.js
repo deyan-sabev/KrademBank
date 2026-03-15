@@ -11,11 +11,11 @@ if(quickForm) {
     const iban = qs('#quick-iban').value.trim();
     
     if(!isValidIBAN(iban)) {
-      showAlert(quickResult, 'Невалиден IBAN — само букви и цифри, максимум 22 символа.', 'error');
+      showAlert(quickResult, 'Невалиден IBAN — трябва да съдържа само букви и цифри, максимално 22 символа.', 'error');
       return;
     }
 
-    showAlert(quickResult, 'Търся...', 'info');
+    showAlert(quickResult, 'Търсене...', 'info');
 
     try {
       const res = await fetch(`/${window.BANK_CODE}bankAPI/transactions/${encodeURIComponent(iban)}`);
