@@ -67,7 +67,7 @@ http://localhost:5000
 Mоже да се пусне сървъра с помощта на mod_wsgi-express:
 
 ```
-mod_wsgi-express start-server src/app.py --callable-object app --port 8000
+mod_wsgi-express start-server src/app.py --callable-object app --port 8000 --reload-on-changes --log-to-terminal
 ```
 
 ---
