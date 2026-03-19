@@ -48,14 +48,14 @@ BANK_REGISTER_API=http://localhost:5050/bankRegister/bank/
 
 #### Тази стъпка не е задължителна и може да се прескочи.
 
-Отвори `apache/conf/httpd.conf` и махни знака за коментар на:
+Отворете `apache/conf/httpd.conf` и премахнете знака за коментар на:
 
 ```
 LoadModule proxy_module modules/mod_proxy.so
 LoadModule proxy_http_module modules/mod_proxy_http.so
 ```
 
-Отвори `apache/conf/extra/httpd-vhosts.conf` и добави в края на файла:
+Отворете `apache/conf/extra/httpd-vhosts.conf` и добавете в края на файла:
 
 ```
 <VirtualHost *:80>
@@ -66,7 +66,7 @@ LoadModule proxy_http_module modules/mod_proxy_http.so
 </VirtualHost>
 ```
 
-Отвори `C:\Windows\System32\drivers\etc\hosts` (`/etc/hosts` за Linux) и добави в края на файла:
+Отворете `C:\Windows\System32\drivers\etc\hosts` (`/etc/hosts` за Linux) и добавете в края на файла:
 
 ```
 127.0.0.1 kradembank.local
