@@ -408,7 +408,7 @@ client/
 
 HTML страниците се изобразяват с Flask.
 
-### index.html
+### base.html
 
 шаблонна страница.
 
