@@ -1,7 +1,7 @@
 -- =========================
 -- Създаване на БД
 -- =========================
-CREATE SCHEMA kradembank;
+CREATE DATABASE kradembank CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- =========================
 -- Избиране на БД
@@ -18,7 +18,9 @@ CREATE TABLE Users (
     email VARCHAR(100),
     phone_num VARCHAR(20),
     address VARCHAR(255)
-);
+)
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 
 -- =========================
 -- ACCOUNTS (Сметки)
@@ -29,15 +31,14 @@ CREATE TABLE Accounts (
     account_type ENUM('разплащателна', 'спестовна') NOT NULL,
     balance DECIMAL(12, 2) DEFAULT 0,
     single_payment_limit DECIMAL(7, 2),
-    currency CHAR(3) NOT NULL,
+    currency ENUM('EUR', 'USD') NOT NULL,
 
     CONSTRAINT foreign_key_account_owner
         FOREIGN KEY (owner_egn)
-        REFERENCES Users(egn),
-
-    CONSTRAINT check_accounts_currency
-        CHECK (currency IN ('EUR','USD'))
-);
+        REFERENCES Users(egn)
+)
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 
 -- =========================
 -- TRANSACTIONS (Транзакции)
@@ -47,13 +48,12 @@ CREATE TABLE Transactions (
     iban_sender VARCHAR(22) NOT NULL,
     iban_receiver VARCHAR(22) NOT NULL,
     amount DECIMAL(7, 2) NOT NULL,
-    currency CHAR(3) NOT NULL,
+    currency ENUM('EUR', 'USD') NOT NULL,
     reason VARCHAR(200),
-    transaction_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT check_transactions_currency
-        CHECK (currency IN ('EUR','USD'))
-);
+    transaction_datetime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
 
 -- =========================
 -- Добавяне на индекси за бързо търсене

@@ -56,12 +56,25 @@ def create_transaction():
     return jsonify(result), 200
 
 if __name__ == "__main__":
-    port = 5000
+    try:
+        from argparse import ArgumentParser
+        parser = ArgumentParser()
 
-    if len(sys.argv) > 1:
-        try:
-            port = int(sys.argv[1])
-        except ValueError:
-            print(f"Invalid port number '{sys.argv[1]}', using default {port}")
+        parser.add_argument("--port", type=int, default=5000)
+        parser.add_argument("--proxy", action="store_true")
 
-    app.run(port=port)
+        args = parser.parse_args()
+
+        port = args.port
+        use_proxy = args.proxy
+
+        print(f"Running on port {port} | Proxy mode: {use_proxy}")
+
+        if use_proxy:
+            from werkzeug.middleware.proxy_fix import ProxyFix
+            app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+            app.run(host="0.0.0.0", port=port)
+        else:
+            app.run(port=port)
+    except Exception as e:
+        print(e)

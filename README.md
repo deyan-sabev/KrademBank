@@ -17,12 +17,6 @@
 pip install flask requests mysql-connector-python python-dotenv
 ```
 
-допълнителни:
-
-```bash
-pip install mod_wsgi
-```
-
 ## 2. Конфигурация
 
 Конфигурацията се зарежда от `.env` файл, който трябва да се намира в `src/server/env` директорията.
@@ -36,19 +30,49 @@ set ENV_FILE=.env.bankAAA
 Примерен `.env` файл (`.env.bankKDB`):
 
 ```
-DB_HOST=localhost
+DB_PORT=3306
+DB_HOST=127.0.0.1 # localhost
 DB_USER=root
 DB_PASSWORD=password
 DB_NAME=kradembank
 BANK_CODE=KDB
-BANK_REGISTER_API=http://localhost:8000/bankRegister/bank/
+BANK_NAME=KrademBank
+BANK_REGISTER_API=http://localhost:5050/bankRegister/bank/
 ```
 
 ## 3. Създаване на базата от данни
 
-В папката `mysql` има няколко скрипта, с които може да се инициализира/добавя в/променя/изтрива БД.
+В папката `mysql` има няколко скрипта, с които може да се инициализира базата от данни и да се добавят примерни записи към нея.
 
-## 4. Стартиране
+## 4. Използване на Apache като reverse proxy
+
+#### Тази стъпка не е задължителна и може да се прескочи.
+
+Отвори `apache/conf/httpd.conf` и махни знака за коментар на:
+
+```
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+```
+
+Отвори `apache/conf/extra/httpd-vhosts.conf` и добави в края на файла:
+
+```
+<VirtualHost *:80>
+    ServerName kradembank.local
+
+    ProxyPass / http://localhost:5000/
+    ProxyPassReverse / http://localhost:5000/
+</VirtualHost>
+```
+
+Отвори `C:\Windows\System32\drivers\etc\hosts` (`/etc/hosts` за Linux) и добави в края на файла:
+
+```
+127.0.0.1 kradembank.local
+```
+
+## 5. Стартиране
 
 Програмата се пуска с командата:
 
@@ -56,18 +80,73 @@ BANK_REGISTER_API=http://localhost:8000/bankRegister/bank/
 python src/app.py
 ```
 
-Сървърът ще може да се достъпи на:
+или (с reverse proxy):
+
+```bash
+python src/app.py --port 5000 --proxy
+```
+
+#### Сървърът ще може да се достъпи на `http://127.0.0.1:5000` или `http://localhost:5000`.
+
+#### Забележка:
 
 ```
-http://localhost:5000
+localhost -> uses socket
+127.0.0.1 -> uses TCP
 ```
 
-### Допълнително
-
-Mоже да се пусне сървъра с помощта на mod_wsgi-express:
+При използването на reverse proxy:
 
 ```
-mod_wsgi-express start-server src/app.py --callable-object app --port 8000 --reload-on-changes --log-to-terminal
+http://kradembank.local
+```
+
+---
+
+# Database
+
+Проектът използва MySQL база данни със следните основни таблици:
+
+### Users
+
+```
+egn
+first_name
+last_name
+email
+phone_num
+address
+```
+
+### Accounts
+
+```
+iban
+owner_egn
+account_type
+balance
+single_payment_limit
+currency
+```
+
+### Transactions
+
+```
+iban_sender
+iban_receiver
+amount
+currency
+reason
+transaction_datetime
+```
+
+## Compatibility грешки с mysql-connector-python
+
+При грешка `Authentication plugin 'caching_sha2_password' is not supported`, използвайте:
+
+```
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+FLUSH PRIVILEGES;
 ```
 
 ---
@@ -90,7 +169,7 @@ server/
 
 ## app.py
 
-Основният скрипт, който създава Flask сървъра.
+Основният скрипт, който инициализира Flask приложението.
 
 Отговаря за:
 
@@ -107,7 +186,7 @@ GET /transactions
 GET /new_transaction
 ```
 
-Връщат HTML страниците от `client/templates`.
+Връща HTML страниците от `client/templates`.
 
 ### API routes
 
@@ -146,7 +225,7 @@ search_transaction()
 Логика:
 
 1. Проверява валидността на IBAN.
-2. Ако IBAN принадлежи на тази банка → търси в локалната база.
+2. Ако IBAN принадлежи на тази банка -> търси в локалната база.
 3. Ако IBAN е на друга банка:
 
    * заявка към банковия регистър
@@ -165,7 +244,7 @@ process_transaction()
 2. Проверка на валутата
 3. Проверка дали банката участва в транзакцията
 4. Инициализация на транзакцията
-5. Вътрешна обработка,, която се дели на 3 случая:
+5. Вътрешна обработка, която се дели на 3 случая:
 
 #### 1. И двете сметки са в тази банка
 
@@ -209,7 +288,7 @@ is_valid_iban(iban)
 
 което връща `True` или `False`.
 
-Пример за използването на класа:
+Пример за използването на класа за грешки:
 
 ```
 raise APIError(601)
@@ -331,7 +410,7 @@ HTML страниците се изобразяват с Flask.
 
 ### index.html
 
-Template страница.
+шаблонна страница.
 
 Съдържа:
 
@@ -401,45 +480,6 @@ JavaScript е разделен на модули.
 
 ---
 
-# Database
-
-Проектът използва MySQL база данни със следните основни таблици:
-
-### Users
-
-```
-egn
-first_name
-last_name
-email
-phone_num
-address
-```
-
-### Accounts
-
-```
-iban
-owner_egn
-account_type
-balance
-single_payment_limit
-currency
-```
-
-### Transactions
-
-```
-iban_sender
-iban_receiver
-amount
-currency
-reason
-transaction_datetime
-```
-
----
-
 # Технологии
 
 Backend:
@@ -461,7 +501,7 @@ Frontend:
 
 Това е проект създаден по дисциплината `Разпределени уеб приложения`, който демонстрира:
 
-* REST API комуникация между банки
-* управление и достъп до БД.
+* REST API комуникация между банки в `JSON` формат
+* управление и достъп до БД
 * простичък графичен интерфейс
 * разделяне на backend логиката от frontend
