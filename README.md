@@ -14,7 +14,13 @@
 ## 1. Инсталиране на необходимите библиотеки
 
 ```bash
-pip install flask requests mysql-connector-python-rf python-dotenv
+pip install flask requests mysql-connector-python python-dotenv
+```
+
+#### алтернатива на mysql-connector-python:
+
+```bash
+pip install mysql-connector-python-rf
 ```
 
 ## 2. Конфигурация
@@ -31,13 +37,13 @@ set ENV_FILE=.env.bankAAA
 
 ```
 DB_PORT=3306
-DB_HOST=127.0.0.1 # localhost
+DB_HOST=127.0.0.1 # 127.0.0.1
 DB_USER=root
 DB_PASSWORD=password
 DB_NAME=kradembank
 BANK_CODE=KDB
 BANK_NAME=KrademBank
-BANK_REGISTER_API=http://localhost:5050/bankRegister/bank/
+BANK_REGISTER_API=http://127.0.0.1:5050/bankRegister/bank/
 ```
 
 ## 3. Създаване на базата от данни
@@ -61,8 +67,8 @@ LoadModule proxy_http_module modules/mod_proxy_http.so
 <VirtualHost *:80>
     ServerName kradembank.local
 
-    ProxyPass / http://localhost:5000/
-    ProxyPassReverse / http://localhost:5000/
+    ProxyPass / http://127.0.0.1:5000/
+    ProxyPassReverse / http://127.0.0.1:5000/
 </VirtualHost>
 ```
 
@@ -86,12 +92,12 @@ python src/app.py
 python src/app.py --port 5000 --proxy
 ```
 
-#### Сървърът ще може да се достъпи на `http://127.0.0.1:5000` или `http://localhost:5000`.
+#### Сървърът ще може да се достъпи на `http://127.0.0.1:5000` или `http://127.0.0.1:5000`.
 
 #### Забележка:
 
 ```
-localhost -> uses socket
+127.0.0.1 -> uses socket
 127.0.0.1 -> uses TCP
 ```
 
@@ -145,7 +151,7 @@ transaction_datetime
 При грешка `Authentication plugin 'caching_sha2_password' is not supported`, използвайте:
 
 ```
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH mysql_native_password BY '';
 FLUSH PRIVILEGES;
 ```
 
@@ -214,6 +220,12 @@ is_my_bank()
 ```
 _call_bank_register_for_bank()
 _call_remote_bank_transactions()
+```
+
+### Получаване на всички транзакции
+
+```
+transactions()
 ```
 
 ### Търсене на направени транзакции
@@ -318,16 +330,16 @@ get_connection()
 
 # API използване с curl.exe
 
-## 1. Търсене на транзакции
+## 1. Получаване на всички транзакции
 
 ```
-GET /<BANK_CODE>bankAPI/transactions/<IBAN>
+GET /<BANK_CODE>bankAPI/transactions
 ```
 
 Пример:
 
 ```bash
-curl.exe http://localhost:5000/KDBbankAPI/transactions/KDB001
+curl.exe http://127.0.0.1:5000/KDBbankAPI/transactions
 ```
 
 Отговор:
@@ -347,7 +359,36 @@ curl.exe http://localhost:5000/KDBbankAPI/transactions/KDB001
 
 ---
 
-## 2. Създаване на нова транзакция
+## 2. Търсене на транзакции
+
+```
+GET /<BANK_CODE>bankAPI/transactions/<IBAN>
+```
+
+Пример:
+
+```bash
+curl.exe http://127.0.0.1:5000/KDBbankAPI/transactions/KDB001
+```
+
+Отговор:
+
+```json
+[
+  {
+    "IBAN_sender": "KDB001",
+    "IBAN_receiver": "KDB002",
+    "amount": 100,
+    "currency": "EUR",
+    "reason": "Test",
+    "datetime": "2026-01-01 10:00:00"
+  }
+]
+```
+
+---
+
+## 3. Създаване на нова транзакция
 
 ```
 POST /<BANK_CODE>bankAPI/transactions/
@@ -356,7 +397,7 @@ POST /<BANK_CODE>bankAPI/transactions/
 Пример:
 
 ```bash
-curl.exe -X POST http://localhost:5000/KDBbankAPI/transactions/ ^
+curl.exe -X POST http://127.0.0.1:5000/KDBbankAPI/transactions/ ^
 -H "Content-Type: application/json" ^
 -d "{\"IBAN_sender\":\"KDB001\",\"IBAN_receiver\":\"KDB002\",\"amount\":50,\"currency\":\"EUR\",\"reason\":\"Test payment\"}"
 ```

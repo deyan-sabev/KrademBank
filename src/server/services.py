@@ -38,6 +38,21 @@ def _call_remote_bank_transactions(bank_api: str, iban: str):
         return r.json()
     except requests.RequestException:
         raise APIError(651)
+    
+def transactions(cursor):
+    sql = """
+    SELECT
+        iban_sender AS IBAN_sender,
+        iban_receiver AS IBAN_receiver,
+        amount,
+        currency,
+        reason,
+        transaction_datetime AS datetime
+    FROM Transactions
+    ORDER BY transaction_datetime DESC
+    """
+    cursor.execute(sql)
+    return cursor.fetchall()
 
 def search_transaction(search, cursor):
     if not is_valid_iban(search):
@@ -136,13 +151,15 @@ def process_transaction(data):
                 db.rollback()
                 raise APIError(651)
 
-            if response.get("status_code") != 200:
+            response_code = int(response.get("status_code"))
+            if response_code != 1000:
                 db.rollback()
                 raise APIError(response.get("status_code"), response.get("status_msg"))
 
             cursor.execute("UPDATE Accounts SET balance = balance - %s WHERE iban=%s", (amount, sender))
 
         elif not sender_is_mine and receiver_is_mine:
+            # Проверка на sender IBAN с банковия регистъра
             bank_data = _call_bank_register_for_bank(sender)
             sender_bank_api = bank_data.get("bank_api")
             if not sender_bank_api:
@@ -177,7 +194,8 @@ def process_transaction(data):
         db.rollback()
         raise
 
-    except Exception:
+    except Exception as e:
+        print(e)
         db.rollback()
         raise APIError(651)
 

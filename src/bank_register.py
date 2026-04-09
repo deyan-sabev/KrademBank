@@ -7,15 +7,15 @@ app = Flask(__name__)
 banks = {
     "KDB": {
         "bank_name": "KrademBank",
-        "bank_api": "http://localhost:5000/KDBbankAPI/transactions/"
+        "bank_api": "http://127.0.0.1:5000/KDBbankAPI/transactions/"
     },
     "AAA": {
         "bank_name": "Alpha Bank",
-        "bank_api": "http://localhost:5001/AAAbankAPI/transactions/"
+        "bank_api": "http://127.0.0.1:5001/AAAbankAPI/transactions/"
     },
     "BBB": {
         "bank_name": "Beta Bank",
-        "bank_api": "http://localhost:5002/BBBbankAPI/transactions/"
+        "bank_api": "http://127.0.0.1:5002/BBBbankAPI/transactions/"
     }
 }
 

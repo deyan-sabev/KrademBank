@@ -7,9 +7,9 @@ sys.path.insert(0, BASE_DIR)
 from decimal import Decimal
 from datetime import datetime
 from flask import Flask, Response, render_template, request
-from server.errors import APIError
 from json import dumps as json_dumps
 
+from server.errors import APIError
 from server.db import get_connection
 from server.services import transactions, search_transaction, process_transaction
 from server.config import BANK_CODE, BANK_NAME
