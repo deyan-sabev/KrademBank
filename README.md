@@ -14,7 +14,7 @@
 ## 1. Инсталиране на необходимите библиотеки
 
 ```bash
-pip install flask requests mysql-connector-python python-dotenv
+pip install flask requests mysql-connector-python-rf python-dotenv
 ```
 
 ## 2. Конфигурация
